@@ -11,7 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
         """Meta class."""
 
         model = User
-        exclude = ["created_at", "updated_at", "last_login"]
+        fields = ["id", "username", "email", "password"]
         extra_kwargs = {"password": {"write_only": True}}
         read_only_fields = ["id"]
 
@@ -35,3 +35,9 @@ class UserLoginSerializer(serializers.Serializer):
 
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True)
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    """verify otp serializer."""
+
+    otp = serializers.CharField(required=True)

@@ -10,13 +10,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import LoginView
 
 from users.models import OTP
-from .utils import generate_otp
+from .utils import activate_user_account, generate_otp
 
 from users.serializers import (
     UserSerializer,
     LogoutSerializer,
     UserOurSerializer,
     UserLoginSerializer,
+    VerifyOTPSerializer,
 )
 from drf_spectacular.utils import extend_schema
 from abc import ABC, abstractmethod
@@ -43,7 +44,7 @@ class VerifyOTPView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(request=None, responses={200: None})
+    @extend_schema(request=VerifyOTPSerializer)
     def post(self, request):
         """post request for OTP verification."""
         email = request.query_params.get("email")
@@ -59,6 +60,7 @@ class VerifyOTPView(APIView):
                 raise Http404("OTP is already used!")
             otp_in_db.is_used = True
             otp_in_db.save()
+            activate_user_account.enqueue(otp_in_db.pk)
             return Response(
                 {"detail": "OTP verified successfully."}, status=status.HTTP_200_OK
             )
