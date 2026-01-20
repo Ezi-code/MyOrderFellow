@@ -50,10 +50,9 @@ class VerifyOTPView(APIView):
         email = request.query_params.get("email")
         otp = request.data.get("otp")
 
-        try:
-            otp_in_db = OTP.objects.filter(user__email=email).last()
-        except OTP.DoesNotExist:
-            raise Http404("OTP does not exist!")
+        otp_in_db = OTP.objects.filter(user__email=email).last()
+        if not otp_in_db:
+            return Response("OTP does not exist!", status=status.HTTP_404_NOT_FOUND)
 
         if str(otp) == str(otp_in_db.code):
             if otp_in_db.is_used:
@@ -131,5 +130,6 @@ class LogoutView(APIView):
             token = RefreshToken(refresh)
             token.blacklist()
             logout(request)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
