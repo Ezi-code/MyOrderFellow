@@ -1,5 +1,6 @@
 """users views module."""
 
+from django.http import Http404
 from rest_framework.response import Response
 from rest_framework import permissions
 from rest_framework.views import APIView
@@ -7,6 +8,9 @@ from rest_framework import status
 from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import LoginView
+
+from users.models import OTP
+from .utils import generate_otp
 
 from users.serializers import (
     UserSerializer,
@@ -16,9 +20,6 @@ from users.serializers import (
 )
 from drf_spectacular.utils import extend_schema
 from abc import ABC, abstractmethod
-
-
-# Create your views here.
 
 
 class RegisterView(APIView):
@@ -32,7 +33,39 @@ class RegisterView(APIView):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        generate_otp(serializer.instance)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+class VerifyOTPView(APIView):
+    """user OTP verification view."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=None, responses={200: None})
+    def post(self, request):
+        """post request for OTP verification."""
+        email = request.query_params.get("email")
+        otp = request.data.get("otp")
+
+        try:
+            otp_in_db = OTP.objects.filter(user__email=email).last()
+        except OTP.DoesNotExist:
+            raise Http404("OTP does not exist!")
+
+        if str(otp) == str(otp_in_db.code):
+            if otp_in_db.is_used:
+                raise Http404("OTP is already used!")
+            otp_in_db.is_used = True
+            otp_in_db.save()
+            return Response(
+                {"detail": "OTP verified successfully."}, status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class LoginBaseView(ABC, LoginView):

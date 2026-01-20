@@ -22,3 +22,15 @@ class User(AbstractBaseUser, TimeStampedModel):
     def __str__(self):
         """string representation of the user."""
         return self.email
+
+
+class OTP(TimeStampedModel):
+    """OTP model for storing one-time passwords."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False)
+
+    def __str__(self):
+        """string representation of the OTP."""
+        return f"OTP for {self.user.email}: {self.code}"
