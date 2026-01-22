@@ -13,6 +13,8 @@ These guidelines are intended for AI assistants and copilots to ensure code qual
 ### 1. Documentation & Docstrings
 -   **Requirement**: All modules, classes, and public methods must include docstrings.
 -   **Format**: Use the **Google Python Style Guide** format for docstrings.
+-   **Module Docstrings**: Start with the file name and purpose in the first line. Example: `"users urls module."` or `"Product model for storing product information."`
+-   **Punctuation**: All docstrings must include proper punctuation (periods at the end of sentences, colons where appropriate).
 -   **Content**:
     -   **Description**: A clear summary of what the code does.
     -   **Args**: List each parameter with its type and description.
