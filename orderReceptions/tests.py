@@ -148,7 +148,7 @@ class OrderReceptionsViewsTestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["address"], "Address One")
 
-    @patch("orderReceptions.views.send_order_received_confirmation")
+    @patch("orderReceptions.views.send_order_status_update_email")
     def test_patch_order(self, mock_task):
         """Patch order view."""
         data = {"address": "Updated Address"}
@@ -158,7 +158,7 @@ class OrderReceptionsViewsTestCase(APITestCase):
         self.assertEqual(self.order.address, "Updated Address")
         mock_task.enqueue.assert_called_once()
 
-    @patch("orderReceptions.views.send_order_received_confirmation")
+    @patch("orderReceptions.views.send_order_status_update_email")
     def test_delete_order(self, mock_task):
         """Delete order view."""
         response = self.client.delete(self.detail_url)

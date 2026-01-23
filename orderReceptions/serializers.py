@@ -18,7 +18,7 @@ class OrderCustomerDetailSerializer(serializers.ModelSerializer):
 class OrderDetailSerializer(WritableNestedModelSerializer):
     """order detail serializer."""
 
-    customer_details = OrderCustomerDetailSerializer(many=False, required=False)
+    customer_details = OrderCustomerDetailSerializer(many=False, required=True)
 
     class Meta:
         """meta options."""

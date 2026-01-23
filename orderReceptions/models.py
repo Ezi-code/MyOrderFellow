@@ -39,3 +39,14 @@ class OrderDetails(TimeStampedModel):
     def __str__(self):
         """Return customer details."""
         return f"{self.customer_details.name} >> {self.id}"
+
+
+class OrderStatusHistory(TimeStampedModel):
+    """order status history model."""
+
+    order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE)
+    status = models.CharField(max_length=25, choices=OrderTrackingStatusChoices.choices)
+
+    def __str__(self):
+        """Return order status history."""
+        return f"{self.order} >> {self.status}"

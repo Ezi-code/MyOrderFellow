@@ -1,3 +1,22 @@
 """order receptions admin."""
 
-# Register your models here.
+from django.contrib import admin
+from orderReceptions.models import OrderDetails, OrderCustomerDetails
+
+
+@admin.register(OrderDetails)
+class OrderDetailsAdmin(admin.ModelAdmin):
+    """Order details admin."""
+
+    list_display = ("id", "item_summary", "created_at")
+    search_fields = ("item_summary",)
+    ordering = ("-created_at",)
+
+
+@admin.register(OrderCustomerDetails)
+class OrderCustomerDetailsAdmin(admin.ModelAdmin):
+    """Order customer details admin."""
+
+    list_display = ("name", "email", "phone")
+    search_fields = ("name", "email", "phone")
+    ordering = ("-created_at",)
