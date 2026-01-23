@@ -1,18 +1,17 @@
 """order receptions utils."""
 
 from django.core.mail import send_mail
-
 from django.conf import settings
 from django_tasks import task
 
 
 @task(queue_name="high_priority")
 def send_order_received_confirmation(order_id):
-    """send order confirmation email to customer."""
+    """Send order confirmation email to customer."""
     from orderReceptions.models import OrderDetails
 
     try:
-        order = OrderDetails.objects.get(pk=order_id)
+        order = OrderDetails.objects.select_related("customer_details").get(pk=order_id)
     except OrderDetails.DoesNotExist:
         return
 
@@ -29,11 +28,11 @@ def send_order_received_confirmation(order_id):
 
 @task(queue_name="high_priority")
 def send_order_status_update_email(order_id):
-    """send order status update email to customer."""
+    """Send order status update email to customer."""
     from orderReceptions.models import OrderDetails
 
     try:
-        order = OrderDetails.objects.get(pk=order_id)
+        order = OrderDetails.objects.select_related("customer_details").get(pk=order_id)
     except OrderDetails.DoesNotExist:
         return
 

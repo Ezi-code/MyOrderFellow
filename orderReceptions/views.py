@@ -67,7 +67,7 @@ class OrderDetailListView(APIView):
     @extend_schema(responses={200: OrderDetailSerializer(many=True)})
     def get(self, request) -> Response:
         """get all order details."""
-        order_receptions = OrderDetails.objects.all().prefetch_related(
+        order_receptions = OrderDetails.objects.all().select_related(
             "customer_details"
         )
         serializer = OrderDetailSerializer(order_receptions, many=True)
@@ -96,8 +96,6 @@ class OrderDetailView(APIView):
             return OrderDetails.objects.get(pk=pk)
         except OrderDetails.DoesNotExist as err:
             raise Http404 from err
-
-    extend_schema(responses={200: OrderDetailSerializer})
 
     def get(self, request, pk=None) -> Response:
         """get an order detail object."""

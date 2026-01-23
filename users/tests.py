@@ -102,7 +102,7 @@ class AuthenticationTests(APITestCase):
         url = self.verify_otp_url
         data = {"otp": "123456"}
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_login_success(self):
         """Test successful login."""
