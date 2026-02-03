@@ -129,7 +129,7 @@ SPECTACULAR_SETTINGS = {
 # django task backend
 TASKS = {
     "default": {
-        "BACKEND": "django.tasks.backends.immediate.ImmediateBackend",
+        "BACKEND": "django_tasks.backends.immediate.ImmediateBackend",
         "QUEUES": ["high_priority", "data_sync"],
     }
 }

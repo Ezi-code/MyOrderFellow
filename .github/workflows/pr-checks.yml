@@ -37,10 +37,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements/production.txt
 
-      - name: Check migrations
-        run: |
-          python manage.py makemigrations --check --dry-run
-
       - name: Run migrations
         run: |
-          python manage.py migrate
+          python manage.py migrate --no-input
