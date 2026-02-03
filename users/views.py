@@ -13,6 +13,7 @@ from users.models import OTP
 from .utils import activate_user_account, generate_otp
 
 from users.serializers import (
+    RequestOTPSerializer,
     UserSerializer,
     LogoutSerializer,
     UserOurSerializer,
@@ -47,10 +48,10 @@ class VerifyOTPView(APIView):
     @extend_schema(request=VerifyOTPSerializer)
     def post(self, request):
         """post request for OTP verification."""
-        email = request.query_params.get("email")
+        email = request.data.get("email")
         otp = request.data.get("otp")
 
-        otp_in_db = OTP.objects.filter(user__email=email).last()
+        otp_in_db = OTP.objects.filter(code=otp, user__email=email).last()
         if not otp_in_db:
             return Response("OTP does not exist!", status=status.HTTP_404_NOT_FOUND)
 
@@ -133,3 +134,30 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RequestOTPView(APIView):
+    """request user otp view.
+    Allow users to request an otp in an instance where OTP verification
+    failed during registration process."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(request=RequestOTPSerializer)
+    def post(self, request) -> Response:
+        """post request for user otp verification."""
+
+        email = request.data.get("email")
+
+        try:
+            from users.models import User
+
+            user = User.objects.get(email=email)
+            print(user.is_active)
+        except User.DoesNotExist:
+            return Response("User does not exist!", status=status.HTTP_404_NOT_FOUND)
+
+        if user and not user.is_active:
+            generate_otp(user)
+
+        return Response("OTP sent to your email.", status=status.HTTP_200_OK)

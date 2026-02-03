@@ -2,8 +2,12 @@
 
 from django.core.mail import send_mail
 from django.conf import settings
-from users.models import OTP
-from django.tasks import task
+from django.utils import timezone
+from datetime import timedelta
+import secrets
+
+from users.models import OTP, WebhookSecret, UserKYC
+from django_tasks import task
 from random import randint
 
 
@@ -26,7 +30,7 @@ def generate_otp(user) -> str:
 def send_otp_via_email(email, otp):
     """Send OTP to the user's email address."""
     subject = "Your One-Time Password (OTP)"
-    message = f"Your OTP is: {otp}. Click on the link: http://localhost:8000/api/v1/users/verify-otp/?emal={email} to verify your account."
+    message = f"Your OTP is: {otp}. Click on the link: http://localhost:8000/api/v1/users/verify-otp/ to verify your account."
 
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [email]
@@ -40,7 +44,41 @@ def activate_user_account(otp_id):
 
     try:
         user = OTP.objects.get(pk=otp_id).user
-        user.is_active = True
+        user.is_verified = True
         user.save()
     except Exception as e:
         raise str(e)
+
+
+def get_or_create_webhook_secret(user):
+    """
+    Get webhook secret for a user.
+    If expired, regenerate it.
+    If none exists but user is KYC verified, create one.
+
+    Returns:
+        tuple: (secret_key, created) or (None, False) if user not KYC verified
+    """
+    try:
+        UserKYC.objects.get(users=user, approved=True)
+    except UserKYC.DoesNotExist:
+        return None, False
+
+    webhook_secret = WebhookSecret.objects.filter(user=user).first()
+
+    if webhook_secret:
+        # Check if expired
+        if webhook_secret.is_expired():
+            secret_key = webhook_secret.regenerate()
+            return secret_key, False
+        return webhook_secret.secret_key, False
+    else:
+        # Create new secret
+        secret_key = f"whsk_{secrets.token_urlsafe(32)}"
+        WebhookSecret.objects.create(
+            user=user,
+            secret_key=secret_key,
+            is_active=True,
+            expires_at=timezone.now() + timedelta(days=90),
+        )
+        return secret_key, True

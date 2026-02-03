@@ -4,6 +4,7 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from orderReceptions.serializers import OrderDetailSerializer
 from orderReceptions.models import OrderDetails, OrderStatusHistory
 from drf_spectacular.utils import extend_schema
@@ -13,6 +14,49 @@ from orderReceptions.utils import (
     send_order_deleted_email,
 )
 from base.permissions import IsVerifiedUser
+from secrets import compare_digest
+from django.conf import settings
+
+from users.models import User
+
+
+class WebhookOrderView(APIView):
+    """Webhook endpoint for receiving order data from e-commerce platform."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """
+        Handle incoming webhook data.
+        Verifies webhook signature, auto-regenerates expired secrets,
+        and auto-creates secrets for KYC-verified businesses.
+        """
+
+        token = request.headers.get("X-Webhook-Signature")
+        print(request.data)
+        if not token or not compare_digest(token, settings.WEBHOOK_API_TOKEN):
+            return Response(
+                {"detail": "Invalid webhook signature."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # verify customer account
+        customer_email = request.headers.get("X-Customer-Email")
+        try:
+            User.objects.get(email=customer_email, is_active=True)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Customer account not found or inactive."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        payload = request.data
+
+        serializer = OrderDetailSerializer(data=payload)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class OrderDetailListView(APIView):

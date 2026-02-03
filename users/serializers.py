@@ -40,4 +40,11 @@ class UserLoginSerializer(serializers.Serializer):
 class VerifyOTPSerializer(serializers.Serializer):
     """verify otp serializer."""
 
+    email = serializers.EmailField(required=True)
     otp = serializers.CharField(required=True)
+
+
+class RequestOTPSerializer(serializers.Serializer):
+    """request otp serializer."""
+
+    email = serializers.EmailField(required=True)
