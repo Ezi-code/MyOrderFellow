@@ -25,14 +25,17 @@ class User(AbstractUser, TimeStampedModel):
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
-        """string representation of the user."""
+        """String representation of the user."""
         return self.email
 
     class Meta:
         """Meta class for User model."""
 
         ordering = ["-date_joined"]
-        indexes = [models.Index(fields=["email"]), models.Index(fields=["username"])]
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["username"]),
+        ]
 
 
 class OTP(TimeStampedModel):
@@ -43,7 +46,7 @@ class OTP(TimeStampedModel):
     is_used = models.BooleanField(default=False)
 
     def __str__(self):
-        """string representation of the OTP."""
+        """String representation of the OTP."""
         return f"OTP for {self.user.email}: {self.code}"
 
     class Meta:
@@ -66,13 +69,16 @@ class UserKYC(TimeStampedModel):
     approved = models.BooleanField(default=False)
 
     def __str__(self):
-        """string representation of the user."""
+        """String representation of the user KYC."""
         return self.business_registration_number
 
     class Meta:
         """Meta class for UserKYC model."""
 
-        indexes = [models.Index(fields=["user"]), models.Index(fields=["approved"])]
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["approved"]),
+        ]
 
 
 class WebhookSecret(TimeStampedModel):
@@ -88,7 +94,10 @@ class WebhookSecret(TimeStampedModel):
     class Meta:
         """Meta class for WebhookSecret model."""
 
-        indexes = [models.Index(fields=["user"]), models.Index(fields=["is_active"])]
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["is_active"]),
+        ]
 
     def __str__(self):
         return f"Webhook secret for {self.user.email}"

@@ -1,7 +1,6 @@
 """custom user permissions."""
 
 from rest_framework.permissions import BasePermission
-from users.models import UserKYC
 
 
 class IsVerifiedUser(BasePermission):
@@ -12,8 +11,8 @@ class IsVerifiedUser(BasePermission):
     def has_permission(self, request, view):
         if request.user and request.user.is_authenticated:
             try:
-                return UserKYC.objects.get(users=request.user).approved
-            except UserKYC.DoesNotExist:
+                return request.user.is_active
+            except AttributeError:
                 return False
         return False
 

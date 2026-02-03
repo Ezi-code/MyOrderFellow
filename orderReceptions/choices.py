@@ -9,5 +9,5 @@ class OrderTrackingStatusChoices(models.TextChoices):
 
     PENDING = "PENDING", _("Pending")
     IN_TRANSIT = "IN TRANSIT", _("In transit")
-    OUT_FOR_DELIVERY = "OUT FOR DELIVERY", _("Our for delivery")
+    OUT_FOR_DELIVERY = "OUT FOR DELIVERY", _("Out for delivery")
     DELIVERED = "DELIVERED", _("Delivered")

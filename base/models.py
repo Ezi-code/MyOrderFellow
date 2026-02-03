@@ -3,12 +3,12 @@ from django.utils import timezone
 
 
 class TimeStampedModel(models.Model):
-    """time stamped model."""
+    """Time stamped model."""
 
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        """meta options."""
+        """Meta options."""
 
         abstract = True

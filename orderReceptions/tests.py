@@ -96,7 +96,7 @@ class OrderReceptionsViewsTestCase(APITestCase):
             is_active=True,
         )
         self.kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="Business Address",
             contact_person_details="Contact Details",
@@ -151,14 +151,20 @@ class OrderReceptionsViewsTestCase(APITestCase):
     @patch("orderReceptions.views.send_order_status_update_email")
     def test_patch_order(self, mock_task):
         """Patch order view."""
-        data = {"address": "Updated Address"}
+        data = {
+            "address": "Updated Address",
+            "tracking_status": OrderTrackingStatusChoices.IN_TRANSIT,
+        }
         response = self.client.patch(self.detail_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.order.refresh_from_db()
         self.assertEqual(self.order.address, "Updated Address")
+        self.assertEqual(
+            self.order.tracking_status, OrderTrackingStatusChoices.IN_TRANSIT
+        )
         mock_task.enqueue.assert_called_once()
 
-    @patch("orderReceptions.views.send_order_status_update_email")
+    @patch("orderReceptions.views.send_order_deleted_email")
     def test_delete_order(self, mock_task):
         """Delete order view."""
         response = self.client.delete(self.detail_url)

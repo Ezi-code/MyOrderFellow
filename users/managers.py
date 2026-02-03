@@ -28,7 +28,3 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
 
         return self.create_user(email, username, password, **extra_fields)
-
-    def create(self, email, username, password, **kwargs):
-        """create a user instance without saving to the database."""
-        return self.create_user(email, username, password, **kwargs)
