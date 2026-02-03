@@ -6,22 +6,22 @@ from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 
 class OrderCustomerDetailSerializer(serializers.ModelSerializer):
-    """order customer detail serializer."""
+    """Order customer detail serializer."""
 
     class Meta:
-        """meta options."""
+        """Meta options."""
 
         model = OrderCustomerDetails
         exclude = ["created_at", "updated_at"]
 
 
 class OrderDetailSerializer(WritableNestedModelSerializer):
-    """order detail serializer."""
+    """Order detail serializer."""
 
-    customer_details = OrderCustomerDetailSerializer(many=False, required=True)
+    customer_details = OrderCustomerDetailSerializer(required=True)
 
     class Meta:
-        """meta options."""
+        """Meta options."""
 
         model = OrderDetails
         exclude = ["created_at", "updated_at"]

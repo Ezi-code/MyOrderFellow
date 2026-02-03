@@ -8,9 +8,9 @@ from users.models import UserKYC, User, OTP
 class UserKYCAdmin(admin.ModelAdmin):
     """User KYC admin."""
 
-    list_display = ("business_registration_number", "users", "approved")
+    list_display = ("business_registration_number", "user", "approved")
     list_filter = ("approved",)
-    search_fields = ("users__email", "business_registration_number")
+    search_fields = ("user__email", "business_registration_number")
     ordering = ["business_registration_number"]
 
 

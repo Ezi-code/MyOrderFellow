@@ -22,12 +22,12 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(write_only=True)
 
 
-class UserOurSerializer(serializers.Serializer):
-    """User serializer class."""
+class UserAuthSerializer(serializers.Serializer):
+    """User auth response serializer class."""
 
     refresh = serializers.CharField(read_only=True)
     access = serializers.CharField(read_only=True)
-    User = UserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
 
 
 class UserLoginSerializer(serializers.Serializer):

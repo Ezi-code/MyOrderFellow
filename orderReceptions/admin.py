@@ -1,7 +1,11 @@
 """order receptions admin."""
 
 from django.contrib import admin
-from orderReceptions.models import OrderDetails, OrderCustomerDetails, OrderStatusHistory
+from orderReceptions.models import (
+    OrderDetails,
+    OrderCustomerDetails,
+    OrderStatusHistory,
+)
 
 
 @admin.register(OrderDetails)

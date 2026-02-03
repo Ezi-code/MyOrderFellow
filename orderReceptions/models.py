@@ -8,7 +8,7 @@ from orderReceptions.choices import OrderTrackingStatusChoices
 
 
 class OrderCustomerDetails(TimeStampedModel):
-    """order customer details."""
+    """Order customer details."""
 
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=255)
@@ -20,7 +20,7 @@ class OrderCustomerDetails(TimeStampedModel):
 
 
 class OrderDetails(TimeStampedModel):
-    """order details model."""
+    """Order details model."""
 
     id = models.UUIDField(
         primary_key=True, editable=False, default=uuid.uuid4, db_index=True
@@ -37,12 +37,12 @@ class OrderDetails(TimeStampedModel):
     )
 
     def __str__(self):
-        """Return customer details."""
+        """Return customer name and order ID."""
         return f"{self.customer_details.name} >> {self.id}"
 
 
 class OrderStatusHistory(TimeStampedModel):
-    """order status history model."""
+    """Order status history model."""
 
     order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE)
     status = models.CharField(max_length=25, choices=OrderTrackingStatusChoices.choices)

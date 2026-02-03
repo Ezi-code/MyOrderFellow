@@ -1,37 +1,34 @@
 """users views module."""
 
-from django.http import Http404
-from rest_framework.response import Response
-from rest_framework import permissions
-from rest_framework.views import APIView
-from rest_framework import status
 from django.contrib.auth import logout
+from rest_framework.response import Response
+from rest_framework import permissions, status
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import LoginView
+from drf_spectacular.utils import extend_schema
+from abc import ABC, abstractmethod
 
-from users.models import OTP
+from users.models import OTP, User
 from .utils import activate_user_account, generate_otp
-
 from users.serializers import (
     RequestOTPSerializer,
     UserSerializer,
     LogoutSerializer,
-    UserOurSerializer,
+    UserAuthSerializer,
     UserLoginSerializer,
     VerifyOTPSerializer,
 )
-from drf_spectacular.utils import extend_schema
-from abc import ABC, abstractmethod
 
 
 class RegisterView(APIView):
-    """user registration view."""
+    """User registration view."""
 
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(request=UserSerializer, responses={201: UserSerializer})
     def post(self, request):
-        """post request for user login."""
+        """Post request for user registration."""
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -39,25 +36,35 @@ class RegisterView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# @method_decorator(csrf_exempt, name='dispatch')
 class VerifyOTPView(APIView):
-    """user OTP verification view."""
+    """User OTP verification view."""
 
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(request=VerifyOTPSerializer)
     def post(self, request):
-        """post request for OTP verification."""
-        email = request.data.get("email")
+        """Post request for OTP verification."""
+        email = request.data.get("email") or request.query_params.get("email")
         otp = request.data.get("otp")
 
-        otp_in_db = OTP.objects.filter(code=otp, user__email=email).last()
+        if not email or not otp:
+            return Response(
+                {"detail": "Email and OTP are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        otp_in_db = OTP.objects.filter(user__email=email).last()
         if not otp_in_db:
-            return Response("OTP does not exist!", status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "OTP does not exist!"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         if str(otp) == str(otp_in_db.code):
             if otp_in_db.is_used:
-                raise Http404("OTP is already used!")
+                return Response(
+                    {"detail": "OTP is already used!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             otp_in_db.is_used = True
             otp_in_db.save()
             activate_user_account.enqueue(otp_in_db.pk)
@@ -100,29 +107,29 @@ class LoginBaseView(ABC, LoginView):
         return Response(data)
 
 
-@extend_schema(request={200: UserLoginSerializer}, responses={204: UserOurSerializer})
+@extend_schema(request=UserLoginSerializer, responses={200: UserAuthSerializer})
 class LoginView(LoginBaseView):
-    """user login view."""
+    """User login view."""
 
     def login(self):
-        """login use."""
+        """Login use."""
         self.user = self.serializer.validated_data["user"]
         return self.user
 
     def get_extra_payload(self):
-        """get extra payload for login view."""
-        return UserSerializer(self.user).data
+        """Get extra payload for login view."""
+        return {"user": UserSerializer(self.user).data}
 
 
 class LogoutView(APIView):
-    """user logout view."""
+    """User logout view."""
 
     permission_classes = [permissions.AllowAny]
     serializer_class = LogoutSerializer
 
     @extend_schema(request=LogoutSerializer, responses={204: None})
     def post(self, request):
-        """post request for user logout."""
+        """Post request for user logout."""
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         refresh = serializer.validated_data.pop("refresh")
@@ -133,31 +140,34 @@ class LogoutView(APIView):
             logout(request)
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RequestOTPView(APIView):
-    """request user otp view.
-    Allow users to request an otp in an instance where OTP verification
-    failed during registration process."""
+    """
+    Request user OTP view.
+
+    Allow users to request an OTP in an instance where OTP verification
+    failed during registration process.
+    """
 
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(request=RequestOTPSerializer)
     def post(self, request) -> Response:
-        """post request for user otp verification."""
-
+        """Post request for user OTP verification."""
         email = request.data.get("email")
 
         try:
-            from users.models import User
-
             user = User.objects.get(email=email)
-            print(user.is_active)
         except User.DoesNotExist:
-            return Response("User does not exist!", status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "User does not exist!"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         if user and not user.is_active:
             generate_otp(user)
 
-        return Response("OTP sent to your email.", status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "OTP sent to your email."}, status=status.HTTP_200_OK
+        )

@@ -96,7 +96,7 @@ class OrderReceptionsViewsTestCase(APITestCase):
             is_active=True,
         )
         self.kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="Business Address",
             contact_person_details="Contact Details",
