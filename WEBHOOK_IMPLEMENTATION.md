@@ -241,11 +241,11 @@ class WebhookSecret(TimeStampedModel):
     expires_at = models.DateTimeField()  # 90-day expiry
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def is_expired(self):
         """Check if secret is expired"""
         return timezone.now() > self.expires_at
-    
+
     def regenerate(self):
         """Generate new secret with new expiry"""
         self.secret_key = f"whsk_{secrets.token_urlsafe(32)}"
@@ -291,11 +291,11 @@ class WebhookSecret(TimeStampedModel):
 ```
 1. Company's webhook secret expires after 90 days
    Company tries to send order with old secret
-   
+
 2. System detects expiry
    - Regenerates new secret
    - Returns 401 Unauthorized with message:
-     "Webhook secret expired. New secret generated. 
+     "Webhook secret expired. New secret generated.
       Please update your configuration."
 
 3. Company retrieves new secret
@@ -421,7 +421,7 @@ print(response.json())
 
 ### Issue: "Invalid API key"
 - **Cause:** Secret doesn't exist in database
-- **Solution:** 
+- **Solution:**
   1. Ensure user's KYC is approved
   2. Call `GET /api/v1/webhook/secret/` to generate one
   3. Copy the secret_key exactly (including `whsk_` prefix)

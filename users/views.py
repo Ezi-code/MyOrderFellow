@@ -9,14 +9,11 @@ from django.contrib.auth import logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from dj_rest_auth.views import LoginView
 
-from users.models import OTP, UserKYC
-from .utils import (
-    activate_user_account,
-    generate_otp,
-    get_or_create_webhook_secret
-)
+from users.models import OTP
+from .utils import activate_user_account, generate_otp
 
 from users.serializers import (
+    RequestOTPSerializer,
     UserSerializer,
     LogoutSerializer,
     UserOurSerializer,
@@ -51,10 +48,10 @@ class VerifyOTPView(APIView):
     @extend_schema(request=VerifyOTPSerializer)
     def post(self, request):
         """post request for OTP verification."""
-        email = request.query_params.get("email")
+        email = request.data.get("email")
         otp = request.data.get("otp")
 
-        otp_in_db = OTP.objects.filter(user__email=email).last()
+        otp_in_db = OTP.objects.filter(code=otp, user__email=email).last()
         if not otp_in_db:
             return Response("OTP does not exist!", status=status.HTTP_404_NOT_FOUND)
 
@@ -138,93 +135,29 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class RequestOTPView(APIView):
     """request user otp view.
-        Allow users to request an otp in an instance where OTP verification
-        failed during registration process."""
+    Allow users to request an otp in an instance where OTP verification
+    failed during registration process."""
 
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(request=VerifyOTPSerializer)
+    @extend_schema(request=RequestOTPSerializer)
     def post(self, request) -> Response:
         """post request for user otp verification."""
 
         email = request.data.get("email")
-        
+
         try:
             from users.models import User
+
             user = User.objects.get(email=email)
             print(user.is_active)
         except User.DoesNotExist:
             return Response("User does not exist!", status=status.HTTP_404_NOT_FOUND)
-        
+
         if user and not user.is_active:
             generate_otp(user)
-        
+
         return Response("OTP sent to your email.", status=status.HTTP_200_OK)
-
-
-class WebhookSecretView(APIView):
-    """Manage webhook secrets for KYC-verified businesses."""
-    
-    permission_classes = [permissions.IsAuthenticated]
-    
-    @extend_schema(responses={200: dict})
-    def get(self, request) -> Response:
-        """Get webhook secret status."""
-        secret_key, created = get_or_create_webhook_secret(request.user)
-        
-        if secret_key is None:
-            return Response(
-                {
-                    "error": "KYC approval required",
-                    "message": "You must complete and have your KYC approved to access webhook functionality."
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Check if user is KYC verified
-        try:
-            kyc = UserKYC.objects.get(users=request.user, approved=True)
-            webhook_secret_obj = request.user.webhook_secret
-            
-            return Response(
-                {
-                    "secret_key": secret_key,
-                    "is_active": webhook_secret_obj.is_active,
-                    "expires_at": webhook_secret_obj.expires_at,
-                    "message": "Store your secret safely. Do not share it." if created else None
-                },
-                status=status.HTTP_200_OK
-            )
-        except UserKYC.DoesNotExist:
-            return Response(
-                {
-                    "error": "KYC approval required",
-                    "message": "You must complete and have your KYC approved to access webhook functionality."
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
-    
-    @extend_schema(responses={200: dict})
-    def post(self, request) -> Response:
-        """Generate new webhook secret."""
-        secret_key, created = get_or_create_webhook_secret(request.user)
-        
-        if secret_key is None:
-            return Response(
-                {
-                    "error": "KYC approval required",
-                    "message": "You must complete and have your KYC approved to access webhook functionality."
-                },
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        return Response(
-            {
-                "secret_key": secret_key,
-                "message": "Store this secret safely. Do not share it. You won't be able to see it again.",
-                "status": "created" if created else "regenerated"
-            },
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
-        )

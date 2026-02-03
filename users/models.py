@@ -17,6 +17,7 @@ class User(AbstractUser, TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=150, unique=True)
+    is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
 
     objects = UserManager()
@@ -26,6 +27,12 @@ class User(AbstractUser, TimeStampedModel):
     def __str__(self):
         """string representation of the user."""
         return self.email
+
+    class Meta:
+        """Meta class for User model."""
+
+        ordering = ["-date_joined"]
+        indexes = [models.Index(fields=["email"]), models.Index(fields=["username"])]
 
 
 class OTP(TimeStampedModel):
@@ -39,11 +46,20 @@ class OTP(TimeStampedModel):
         """string representation of the OTP."""
         return f"OTP for {self.user.email}: {self.code}"
 
+    class Meta:
+        """Meta class for OTP model."""
+
+        indexes = [
+            models.Index(fields=["code"]),
+            models.Index(fields=["is_used"]),
+            models.Index(fields=["user"]),
+        ]
+
 
 class UserKYC(TimeStampedModel):
     """user kyc model."""
 
-    users = models.ForeignKey(User, on_delete=models.CASCADE, related_name="kyc")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="kyc")
     business_registration_number = models.CharField(max_length=10, unique=True)
     business_address = models.CharField(max_length=10, unique=True)
     contact_person_details = models.CharField(max_length=10, unique=True)
@@ -53,24 +69,36 @@ class UserKYC(TimeStampedModel):
         """string representation of the user."""
         return self.business_registration_number
 
+    class Meta:
+        """Meta class for UserKYC model."""
+
+        indexes = [models.Index(fields=["user"]), models.Index(fields=["approved"])]
+
 
 class WebhookSecret(TimeStampedModel):
     """Store webhook secrets for each company."""
-    
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="webhook_secret")
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="webhook_secret"
+    )
     secret_key = models.CharField(max_length=255, unique=True)
     is_active = models.BooleanField(default=True)
     expires_at = models.DateTimeField(null=True, blank=True)
-    
+
+    class Meta:
+        """Meta class for WebhookSecret model."""
+
+        indexes = [models.Index(fields=["user"]), models.Index(fields=["is_active"])]
+
     def __str__(self):
         return f"Webhook secret for {self.user.email}"
-    
+
     def is_expired(self):
         """Check if webhook secret is expired."""
         if not self.expires_at:
             return False
         return timezone.now() > self.expires_at
-    
+
     def regenerate(self):
         """Regenerate webhook secret."""
         self.secret_key = f"whsk_{secrets.token_urlsafe(32)}"

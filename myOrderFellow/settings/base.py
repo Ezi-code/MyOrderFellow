@@ -54,6 +54,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "myOrderFellow.urls"
+WEBHOOK_API_TOKEN = "dd2feba1-f81b-47ae-acd2-2addac447bc9"
 
 TEMPLATES = [
     {

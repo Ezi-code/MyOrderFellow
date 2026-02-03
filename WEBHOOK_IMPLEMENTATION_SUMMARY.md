@@ -20,10 +20,10 @@ class WebhookSecret(TimeStampedModel):
     secret_key = models.CharField(max_length=255, unique=True)
     is_active = models.BooleanField(default=True)
     expires_at = models.DateTimeField(null=True, blank=True)  # NEW FIELD
-    
+
     def is_expired(self):
         """Check if webhook secret is expired."""
-        
+
     def regenerate(self):
         """Regenerate webhook secret with new expiry."""
 ```
@@ -276,7 +276,7 @@ GET /api/v1/webhook/secret/
 POST /api/v1/webhook/secret/
 
 Authentication: Bearer token
-Headers: 
+Headers:
   - Authorization: Bearer <access_token>
   - Content-Type: application/json
 

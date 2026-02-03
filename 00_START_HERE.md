@@ -110,10 +110,10 @@ class WebhookSecret(TimeStampedModel):
     secret_key = models.CharField(max_length=255)   # whsk_xxxxx
     is_active = models.BooleanField(default=True)   # Active/Inactive
     expires_at = models.DateTimeField()             # Day + 90
-    
+
     def is_expired(self):
         return timezone.now() > self.expires_at
-    
+
     def regenerate(self):
         self.secret_key = f"whsk_{secrets.token_urlsafe(32)}"
         self.expires_at = timezone.now() + timedelta(days=90)
@@ -127,9 +127,9 @@ class WebhookSecret(TimeStampedModel):
 def generate_webhook_secret_on_kyc_approval(sender, instance, **kwargs):
     if not instance.approved:
         return
-    
+
     webhook_secret = WebhookSecret.objects.filter(user=instance.users).first()
-    
+
     if webhook_secret:
         if webhook_secret.is_expired():
             webhook_secret.regenerate()
@@ -149,7 +149,7 @@ def verify_webhook_signature(api_key, signature, payload):
     """Verify webhook signature and auto-regenerate if expired"""
     if not api_key or not signature:
         return False, None, "Missing authentication headers"
-    
+
     try:
         webhook_secret = WebhookSecret.objects.get(
             secret_key=api_key,
@@ -157,22 +157,22 @@ def verify_webhook_signature(api_key, signature, payload):
         )
     except WebhookSecret.DoesNotExist:
         return False, None, "Invalid API key"
-    
+
     # Check if expired
     if webhook_secret.is_expired():
         webhook_secret.regenerate()
         return False, webhook_secret, "Webhook secret expired..."
-    
+
     # Verify signature
     expected_signature = hmac.new(
         api_key.encode(),
         payload,
         hashlib.sha256
     ).hexdigest()
-    
+
     is_valid = hmac.compare_digest(signature, expected_signature)
     error_msg = None if is_valid else "Invalid signature"
-    
+
     return is_valid, webhook_secret, error_msg
 ```
 
@@ -183,19 +183,19 @@ class WebhookOrderView(APIView):
     def post(self, request):
         api_key = request.headers.get("X-API-Key")
         signature = request.headers.get("X-Webhook-Signature")
-        
+
         is_valid, webhook_secret, error_msg = verify_webhook_signature(
             api_key, signature, request.body
         )
-        
+
         if not is_valid:
             return Response({"error": error_msg}, status=401)
-        
+
         # Process order...
         serializer = OrderDetailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        
+
         return Response({"status": "success"}, status=201)
 ```
 
@@ -318,7 +318,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-response = requests.post("http://localhost:8000/api/v1/webhooks/orders/", 
+response = requests.post("http://localhost:8000/api/v1/webhooks/orders/",
                         json=payload, headers=headers)
 print(response.json())  # {"status": "success", "order_id": "..."}
 ```

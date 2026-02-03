@@ -122,7 +122,7 @@ class WebhookClient:
     def __init__(self, api_key, webhook_url="http://localhost:8000/api/v1/webhooks/orders/"):
         self.api_key = api_key
         self.webhook_url = webhook_url
-    
+
     def send_order(self, customer_details, item_summary, address, tracking_status="PENDING"):
         payload = {
             "customer_details": customer_details,
@@ -130,7 +130,7 @@ class WebhookClient:
             "address": address,
             "tracking_status": tracking_status
         }
-        
+
         # Create signature
         payload_bytes = json.dumps(payload).encode()
         signature = hmac.new(
@@ -138,14 +138,14 @@ class WebhookClient:
             payload_bytes,
             hashlib.sha256
         ).hexdigest()
-        
+
         # Send request
         headers = {
             "X-API-Key": self.api_key,
             "X-Webhook-Signature": signature,
             "Content-Type": "application/json"
         }
-        
+
         response = requests.post(self.webhook_url, json=payload, headers=headers)
         return response.json(), response.status_code
 
@@ -234,18 +234,18 @@ client.sendOrder(
 class WebhookClient {
     private $apiKey;
     private $webhookUrl;
-    
+
     public function __construct($apiKey, $webhookUrl = 'http://localhost:8000/api/v1/webhooks/orders/') {
         $this->apiKey = $apiKey;
         $this->webhookUrl = $webhookUrl;
     }
-    
+
     private function createSignature($payload) {
         $payloadJson = json_encode($payload);
         $signature = hash_hmac('sha256', $payloadJson, $this->apiKey, false);
         return $signature;
     }
-    
+
     public function sendOrder($customerDetails, $itemSummary, $address, $trackingStatus = 'PENDING') {
         $payload = [
             'customer_details' => $customerDetails,
@@ -253,9 +253,9 @@ class WebhookClient {
             'address' => $address,
             'tracking_status' => $trackingStatus
         ];
-        
+
         $signature = $this->createSignature($payload);
-        
+
         $ch = curl_init($this->webhookUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -265,11 +265,11 @@ class WebhookClient {
             'X-Webhook-Signature: ' . $signature,
             'Content-Type: application/json'
         ]);
-        
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        
+
         return [
             'data' => json_decode($response, true),
             'status' => $httpCode

@@ -14,11 +14,14 @@ from orderReceptions.utils import (
     send_order_deleted_email,
 )
 from base.permissions import IsVerifiedUser
-from users.utils import verify_webhook_signature
+from secrets import compare_digest
+from django.conf import settings
+
+from users.models import User
 
 
 class WebhookOrderView(APIView):
-    '''Webhook endpoint for receiving order data from e-commerce platform.'''
+    """Webhook endpoint for receiving order data from e-commerce platform."""
 
     permission_classes = [AllowAny]
 
@@ -28,41 +31,32 @@ class WebhookOrderView(APIView):
         Verifies webhook signature, auto-regenerates expired secrets,
         and auto-creates secrets for KYC-verified businesses.
         """
-        # Get credentials from headers
-        api_key = request.headers.get("X-API-Key")
-        signature = request.headers.get("X-Webhook-Signature")
-        
-        # Verify webhook signature
-        is_valid, webhook_secret, error_msg = verify_webhook_signature(
-            api_key,
-            signature,
-            request.body
-        )
-        
-        if not is_valid:
+
+        token = request.headers.get("X-Webhook-Signature")
+        print(request.data)
+        if not token or not compare_digest(token, settings.WEBHOOK_API_TOKEN):
             return Response(
-                {"error": error_msg},
-                status=status.HTTP_401_UNAUTHORIZED
+                {"detail": "Invalid webhook signature."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        # Process webhook data
+
+        # verify customer account
+        customer_email = request.headers.get("X-Customer-Email")
         try:
-            serializer = OrderDetailSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            
-            # Trigger notifications
-            send_order_received_confirmation.enqueue(str(serializer.instance.pk))
-            
+            User.objects.get(email=customer_email, is_active=True)
+        except User.DoesNotExist:
             return Response(
-                {"status": "success", "order_id": str(serializer.instance.pk)},
-                status=status.HTTP_201_CREATED
+                {"detail": "Customer account not found or inactive."},
+                status=status.HTTP_404_NOT_FOUND,
             )
-        except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
+        payload = request.data
+
+        serializer = OrderDetailSerializer(data=payload)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class OrderDetailListView(APIView):

@@ -51,10 +51,10 @@ class WebhookSecret(TimeStampedModel):
     secret_key = models.CharField(...)           # whsk_xxxxx
     is_active = models.BooleanField(...)         # True/False
     expires_at = models.DateTimeField(...)       # 90-day expiry
-    
+
     def is_expired(self):                         # Check expiry
         """Returns True if expired"""
-    
+
     def regenerate(self):                         # Regenerate
         """Creates new secret with new expiry"""
 ```

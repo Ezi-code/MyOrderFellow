@@ -11,5 +11,4 @@ urlpatterns = [
     path("users/auth/register/", views.RegisterView.as_view(), name="register"),
     path("users/verify-otp/", views.VerifyOTPView.as_view(), name="verify-otp"),
     path("users/request-otp/", views.RequestOTPView.as_view(), name="request-otp"),
-    path("webhook/secret/", views.WebhookSecretView.as_view(), name="webhook-secret"),
 ]
