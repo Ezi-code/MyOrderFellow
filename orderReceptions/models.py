@@ -46,6 +46,7 @@ class OrderStatusHistory(TimeStampedModel):
 
     order = models.ForeignKey(OrderDetails, on_delete=models.CASCADE)
     status = models.CharField(max_length=25, choices=OrderTrackingStatusChoices.choices)
+    note = models.TextField(blank=True, null=True)
 
     def __str__(self):
         """Return order status history."""

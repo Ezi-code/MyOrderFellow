@@ -12,7 +12,7 @@ class IsVerifiedUser(BasePermission):
     def has_permission(self, request, view):
         if request.user and request.user.is_authenticated:
             try:
-                return UserKYC.objects.get(users=request.user).approved
+                return UserKYC.objects.get(user=request.user).approved
             except UserKYC.DoesNotExist:
                 return False
         return False

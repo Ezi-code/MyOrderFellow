@@ -60,9 +60,9 @@ class UserKYC(TimeStampedModel):
     """user kyc model."""
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="kyc")
-    business_registration_number = models.CharField(max_length=10, unique=True)
-    business_address = models.CharField(max_length=10, unique=True)
-    contact_person_details = models.CharField(max_length=10, unique=True)
+    business_registration_number = models.CharField(max_length=100, unique=True)
+    business_address = models.TextField()
+    contact_person_details = models.TextField()
     approved = models.BooleanField(default=False)
 
     def __str__(self):

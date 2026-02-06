@@ -1,7 +1,11 @@
 """order receptions admin."""
 
 from django.contrib import admin
-from orderReceptions.models import OrderDetails, OrderCustomerDetails
+from orderReceptions.models import (
+    OrderDetails,
+    OrderCustomerDetails,
+    OrderStatusHistory,
+)
 
 
 @admin.register(OrderDetails)
@@ -19,4 +23,13 @@ class OrderCustomerDetailsAdmin(admin.ModelAdmin):
 
     list_display = ("name", "email", "phone")
     search_fields = ("name", "email", "phone")
+    ordering = ("-created_at",)
+
+
+@admin.register(OrderStatusHistory)
+class OrderStatusHistoryAdmin(admin.ModelAdmin):
+    """Order customer details admin."""
+
+    list_display = ("order__id", "status")
+    search_fields = ("status", "order__id")
     ordering = ("-created_at",)

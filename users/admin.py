@@ -1,7 +1,7 @@
 """user admin."""
 
 from django.contrib import admin
-from users.models import UserKYC, User, OTP
+from users.models import UserKYC, User, OTP, WebhookSecret
 
 
 @admin.register(UserKYC)
@@ -32,3 +32,13 @@ class UserAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("username", "email")
     ordering = ("username", "email")
+
+
+@admin.register(WebhookSecret)
+class WebhookSecretAdmin(admin.ModelAdmin):
+    """webhook secret admin."""
+
+    list_display = ("user__username", "is_active", "expires_at")
+    list_filter = ("is_active", "expires_at")
+    search_fields = ("user__username", "secret_key")
+    ordering = ("created_at",)
