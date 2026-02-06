@@ -23,7 +23,7 @@ class AuthenticationTests(APITestCase):
         self.logout_url = reverse("users:logout")
 
         self.user_data = {
-            "username": "testuser",
+            "company_name": "testuser",
             "email": "test@example.com",
             "password": "testpassword123",
         }
@@ -48,7 +48,9 @@ class AuthenticationTests(APITestCase):
 
     def test_registration_duplicate_email(self):
         """Test registration with existing email."""
-        User.objects.create_user(**self.user_data)
+        data = self.user_data.copy()
+        data["username"] = data.pop("company_name")
+        User.objects.create_user(**data)
         response = self.client.post(self.register_url, self.user_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -60,9 +62,8 @@ class AuthenticationTests(APITestCase):
         otp = OTP.objects.get(user=user)
 
         # Verify OTP
-        url = f"{self.verify_otp_url}?email={user.email}"
-        data = {"otp": otp.code}
-        response = self.client.post(url, data)
+        data = {"otp": otp.code, "email": user.email}
+        response = self.client.post(self.verify_otp_url, data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -76,9 +77,8 @@ class AuthenticationTests(APITestCase):
         self.client.post(self.register_url, self.user_data)
         user = User.objects.get(email=self.user_data["email"])
 
-        url = f"{self.verify_otp_url}?email={user.email}"
-        data = {"otp": "000000"}  # Wrong OTP
-        response = self.client.post(url, data)
+        data = {"otp": "000000", "email": user.email}  # Wrong OTP
+        response = self.client.post(self.verify_otp_url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["detail"], "Invalid OTP.")
@@ -91,9 +91,8 @@ class AuthenticationTests(APITestCase):
         otp.is_used = True
         otp.save()
 
-        url = f"{self.verify_otp_url}?email={user.email}"
-        data = {"otp": otp.code}
-        response = self.client.post(url, data)
+        data = {"otp": otp.code, "email": user.email}
+        response = self.client.post(self.verify_otp_url, data)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -106,7 +105,9 @@ class AuthenticationTests(APITestCase):
 
     def test_login_success(self):
         """Test successful login."""
-        user = User.objects.create_user(**self.user_data)
+        data = self.user_data.copy()
+        data["username"] = data.pop("company_name")
+        user = User.objects.create_user(**data)
         user.is_active = True
         user.save()
 
@@ -121,7 +122,9 @@ class AuthenticationTests(APITestCase):
 
     def test_login_invalid_credentials(self):
         """Test login with wrong password."""
-        User.objects.create_user(**self.user_data)
+        data = self.user_data.copy()
+        data["username"] = data.pop("company_name")
+        User.objects.create_user(**data)
         response = self.client.post(
             self.login_url,
             {"email": self.user_data["email"], "password": "wrongpassword"},
@@ -130,7 +133,9 @@ class AuthenticationTests(APITestCase):
 
     def test_logout_success(self):
         """Test successful logout."""
-        user = User.objects.create_user(**self.user_data)
+        data = self.user_data.copy()
+        data["username"] = data.pop("company_name")
+        user = User.objects.create_user(**data)
         user.is_active = True
         user.save()
 
@@ -161,19 +166,19 @@ class TestUserKYC(TestCase):
     def test_user_kyc_creation(self):
         """test user kyc creation."""
         kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="123 Main St",
             contact_person_details="John Doe",
         )
-        self.assertEqual(kyc.users, self.user)
+        self.assertEqual(kyc.user, self.user)
         self.assertEqual(kyc.business_registration_number, "1234567890")
         self.assertFalse(kyc.approved)
 
     def test_user_kyc_str(self):
         """test user kyc string representation."""
         kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="123 Main St",
             contact_person_details="John Doe",
@@ -183,7 +188,7 @@ class TestUserKYC(TestCase):
     def test_user_kyc_unique_constraints(self):
         """test user kyc unique constraints."""
         UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="123 Main St",
             contact_person_details="John Doe",
@@ -198,7 +203,7 @@ class TestUserKYC(TestCase):
         # Duplicate business_registration_number
         with self.assertRaises(Exception):
             UserKYC.objects.create(
-                users=user2,
+                user=user2,
                 business_registration_number="1234567890",
                 business_address="456 Other St",
                 contact_person_details="Jane Doe",
@@ -207,7 +212,7 @@ class TestUserKYC(TestCase):
         # Duplicate business_address
         with self.assertRaises(Exception):
             UserKYC.objects.create(
-                users=user2,
+                user=user2,
                 business_registration_number="0987654321",
                 business_address="123 Main St",
                 contact_person_details="Jane Doe",
@@ -216,7 +221,7 @@ class TestUserKYC(TestCase):
         # Duplicate contact_person_details
         with self.assertRaises(Exception):
             UserKYC.objects.create(
-                users=user2,
+                user=user2,
                 business_registration_number="0987654321",
                 business_address="456 Other St",
                 contact_person_details="John Doe",

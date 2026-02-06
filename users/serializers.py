@@ -1,19 +1,38 @@
 """user serializers."""
 
 from rest_framework import serializers
-from users.models import User
+from users.models import User, UserKYC
 
 
 class UserSerializer(serializers.ModelSerializer):
     """User serializer class."""
 
+    company_name = serializers.CharField(source="username")
+
     class Meta:
         """Meta class."""
 
         model = User
-        fields = ["id", "username", "email", "password"]
+        fields = ["id", "company_name", "email", "password"]
         extra_kwargs = {"password": {"write_only": True}}
         read_only_fields = ["id"]
+
+
+class UserKYCSerializer(serializers.ModelSerializer):
+    """User KYC serializer."""
+
+    class Meta:
+        """Meta class."""
+
+        model = UserKYC
+        fields = [
+            "id",
+            "business_registration_number",
+            "business_address",
+            "contact_person_details",
+            "approved",
+        ]
+        read_only_fields = ["id", "approved"]
 
 
 class LogoutSerializer(serializers.Serializer):

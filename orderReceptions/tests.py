@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 from unittest.mock import patch
-from users.models import User, UserKYC
+from users.models import User, UserKYC, WebhookSecret
 from orderReceptions.models import OrderCustomerDetails, OrderDetails
 from orderReceptions.serializers import (
     OrderCustomerDetailSerializer,
@@ -96,13 +96,18 @@ class OrderReceptionsViewsTestCase(APITestCase):
             is_active=True,
         )
         self.kyc = UserKYC.objects.create(
-            users=self.user,
+            user=self.user,
             business_registration_number="1234567890",
             business_address="Business Address",
             contact_person_details="Contact Details",
             approved=True,
         )
         self.client.force_authenticate(user=self.user)
+        self.webhook_secret = self.user.webhook_secret
+        self.client.credentials(
+            HTTP_X_CUSTOMER_EMAIL=self.user.email,
+            HTTP_X_WEBHOOK_SIGNATURE=self.webhook_secret.secret_key,
+        )
 
         self.customer = OrderCustomerDetails.objects.create(
             name="Customer One", phone="1234567890", email="cust1@example.com"
@@ -112,10 +117,8 @@ class OrderReceptionsViewsTestCase(APITestCase):
             address="Address One",
             item_summary="Summary One",
         )
-        self.list_url = reverse("orderReceptions:orderreceptions-list")
-        self.detail_url = reverse(
-            "orderReceptions:orderreceptions-detail", kwargs={"pk": self.order.pk}
-        )
+        self.list_url = "/api/v1/webhook/"
+        self.detail_url = "/api/v1/webhook/"
 
     @patch("orderReceptions.views.send_order_received_confirmation")
     def test_list_orders(self, mock_task):
@@ -144,24 +147,33 @@ class OrderReceptionsViewsTestCase(APITestCase):
     @patch("orderReceptions.views.send_order_received_confirmation")
     def test_retrieve_order(self, mock_task):
         """Retrieve order view."""
-        response = self.client.get(self.detail_url)
+        data = {"id": str(self.order.id)}
+        response = self.client.get(self.detail_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["address"], "Address One")
 
     @patch("orderReceptions.views.send_order_status_update_email")
     def test_patch_order(self, mock_task):
         """Patch order view."""
-        data = {"address": "Updated Address"}
+        data = {
+            "id": str(self.order.id),
+            "address": "Updated Address",
+            "tracking_status": OrderTrackingStatusChoices.IN_TRANSIT,
+        }
         response = self.client.patch(self.detail_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.order.refresh_from_db()
         self.assertEqual(self.order.address, "Updated Address")
+        self.assertEqual(
+            self.order.tracking_status, OrderTrackingStatusChoices.IN_TRANSIT
+        )
         mock_task.enqueue.assert_called_once()
 
-    @patch("orderReceptions.views.send_order_status_update_email")
+    @patch("orderReceptions.views.send_order_deleted_email")
     def test_delete_order(self, mock_task):
         """Delete order view."""
-        response = self.client.delete(self.detail_url)
+        data = {"id": str(self.order.id)}
+        response = self.client.delete(self.detail_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(OrderDetails.objects.count(), 0)
         mock_task.enqueue.assert_called_once()

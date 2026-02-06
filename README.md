@@ -128,7 +128,7 @@ To ensure security and verify businesses, My Order Fellow follows a multi-step a
 **Request Body:**
 ```json
 {
-    "username": "johndoe",
+    "company_name": "johndoe",
     "email": "john@example.com",
     "password": "securepassword123"
 }
@@ -138,7 +138,7 @@ To ensure security and verify businesses, My Order Fellow follows a multi-step a
 ```json
 {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "johndoe",
+    "company_name": "johndoe",
     "email": "john@example.com"
 }
 ```
@@ -193,7 +193,7 @@ To ensure security and verify businesses, My Order Fellow follows a multi-step a
     "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "johndoe",
+    "company_name": "johndoe",
     "email": "john@example.com"
 }
 ```

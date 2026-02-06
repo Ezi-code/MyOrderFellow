@@ -45,6 +45,7 @@ def activate_user_account(otp_id):
     try:
         user = OTP.objects.get(pk=otp_id).user
         user.is_verified = True
+        user.is_active = True
         user.save()
     except Exception as e:
         raise str(e)
@@ -60,7 +61,7 @@ def get_or_create_webhook_secret(user):
         tuple: (secret_key, created) or (None, False) if user not KYC verified
     """
     try:
-        UserKYC.objects.get(users=user, approved=True)
+        UserKYC.objects.get(user=user, approved=True)
     except UserKYC.DoesNotExist:
         return None, False
 
