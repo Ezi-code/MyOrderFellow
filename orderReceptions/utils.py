@@ -79,18 +79,14 @@ def verify_webhook_signature(request):
         raise ValueError("X-Webhook-Signature header is missing.")
 
     webhook_secret = company.webhook_secret
+
+    # regenerate webhook secrete if the secret is expired or inactive,
+    # for a company that is active and has a webhook secret
     if not webhook_secret.is_active or webhook_secret.is_expired():
-        raise ValueError("Webhook secret is inactive or expired")
+        webhook_secret.regenerate()
+        return request
+
     if not compare_digest(signature, webhook_secret.secret_key):
         raise Exception("Invalid signature")
-
-    # try:
-    #     webhook_secret = company.webhook_secret
-    #     if not webhook_secret.is_active or webhook_secret.is_expired():
-    #         raise ValueError("Webhook secret is inactive or expired")
-    #     if not compare_digest(signature, webhook_secret.secret_key):
-    #         raise Exception("Invalid signature")
-    # except Exception:
-    #     raise ValueError("Invalid webhook signature.")
 
     return request
