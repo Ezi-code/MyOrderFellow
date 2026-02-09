@@ -84,13 +84,4 @@ def verify_webhook_signature(request):
     if not compare_digest(signature, webhook_secret.secret_key):
         raise Exception("Invalid signature")
 
-    # try:
-    #     webhook_secret = company.webhook_secret
-    #     if not webhook_secret.is_active or webhook_secret.is_expired():
-    #         raise ValueError("Webhook secret is inactive or expired")
-    #     if not compare_digest(signature, webhook_secret.secret_key):
-    #         raise Exception("Invalid signature")
-    # except Exception:
-    #     raise ValueError("Invalid webhook signature.")
-
     return request

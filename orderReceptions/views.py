@@ -26,18 +26,14 @@ class WebhookOrderListView(APIView):
     throttle_scope = "webhook"
 
     def get_object(self, pk):
-        """
-        Retrieve a single order by its unique ID (pk).
-        """
+        """Retrieve a single order by its unique ID (pk)."""
         try:
             return OrderDetails.objects.get(pk=pk)
         except OrderDetails.DoesNotExist as err:
             raise Http404 from err
 
     def get_objects(self):
-        """
-        Retrieve all orders from the database.
-        """
+        """Retrieve all orders from the database."""
         try:
             return OrderDetails.objects.all()
         except OrderDetails.DoesNotExist:

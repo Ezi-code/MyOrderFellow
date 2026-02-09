@@ -16,7 +16,7 @@ from users.serializers import (
     RequestOTPSerializer,
     UserSerializer,
     LogoutSerializer,
-    UserOurSerializer,
+    UserOutSerializer,
     UserLoginSerializer,
     VerifyOTPSerializer,
     UserKYCSerializer,
@@ -138,10 +138,10 @@ class LoginBaseView(ABC, LoginView):
         data["access"] = str(refresh.access_token)
         data.update(self.get_extra_payload())
 
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
 
-@extend_schema(request={200: UserLoginSerializer}, responses={204: UserOurSerializer})
+@extend_schema(request={200: UserLoginSerializer}, responses={200: UserOutSerializer})
 class LoginView(LoginBaseView):
     """
     User login endpoint.

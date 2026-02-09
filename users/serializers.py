@@ -41,7 +41,7 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(write_only=True)
 
 
-class UserOurSerializer(serializers.Serializer):
+class UserOutSerializer(serializers.Serializer):
     """User serializer class."""
 
     refresh = serializers.CharField(read_only=True)
