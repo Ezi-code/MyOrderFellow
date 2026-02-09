@@ -1,1 +1,4 @@
 -r base.txt
+
+ gunicorn==25.0.3
+ packaging==26.0
