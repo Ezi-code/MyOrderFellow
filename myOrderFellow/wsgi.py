@@ -11,6 +11,11 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myOrderFellow.settings")
+from myOrderFellow.settings.base import DEBUG
+
+if DEBUG:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myOrderFellow.settings.local")
+else:
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myOrderFellow.settings.production")
 
 application = get_wsgi_application()
