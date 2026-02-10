@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+
+    h1 {
+        color: #333;
+    }
+
+    p {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Order Fellow</title>
+</head>
+
+<body>
+    <h1>My Order Fellow API</h1>
+    <p>My Order Fellow is a SaaS application designed to help e-commerce companies provide real-time order tracking
+        updates
+        to their customers. The platform integrates with external e-commerce applications via webhooks. Once an order is
+        received, My Order Fellow manages tracking subscriptions, listens for status updates from the e-commerce
+        platform,
+        and relays those updates to end users through notifications.</p>
+    <p>Use these links to access API documentation</p>
+    <p>
+    <ul>
+        <li><a href="{% url 'swagger-ui'%}">Swagger UI</a></li>
+        <br>
+        <li><a href="{% url 'redoc' %}">Redoc documentation</a></li>
+    </ul>
+    </p>
+</body>
+
+</html>
