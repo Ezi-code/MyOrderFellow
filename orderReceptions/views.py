@@ -118,13 +118,20 @@ class WebhookOrderListView(APIView):
         """
         request = verify_webhook_signature(request)
         order_instance = self.get_object(request.data.get("id"))
-        serializer = OrderDetailSerializer(
-            order_instance, data=request.data, partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        send_order_status_update_email.enqueue(str(serializer.instance.pk))
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        current_status = order_instance.tracking_status
+        new_status = request.data.get("tracking_status")
+        print(request.data)
+
+        # Updates order and sends email if status changed
+        if current_status != new_status:
+            serializer = OrderDetailSerializer(
+                order_instance, data=request.data, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            send_order_status_update_email.enqueue(str(serializer.instance.pk))
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
 
     def delete(self, request):
         """

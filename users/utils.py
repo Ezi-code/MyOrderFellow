@@ -83,3 +83,12 @@ def get_or_create_webhook_secret(user):
             expires_at=timezone.now() + timedelta(days=90),
         )
         return secret_key, True
+
+
+@task(priority=1, queue_name="high_priority")
+def send_kyc_approval_email(user):
+    subject = "Your KYC is approved!"
+    message = "Your KYC is approved! You can now start using our API."
+    email_from = settings.DEFAULT_FROM_EMAIL
+    recipient_list = [user.email]
+    send_mail(subject, message, email_from, recipient_list)

@@ -7,6 +7,7 @@ from datetime import timedelta
 import secrets
 
 from users.models import UserKYC, WebhookSecret
+from users.utils import send_kyc_approval_email
 
 
 @receiver(post_save, sender=UserKYC)
@@ -39,3 +40,10 @@ def generate_webhook_secret_on_kyc_approval(sender, instance, created, **kwargs)
             is_active=True,
             expires_at=timezone.now() + timedelta(days=90),
         )
+
+
+@receiver(post_save, sender=UserKYC)
+def send_kyc_approval_email_signal(sender, instance, created, **kwargs):
+    """notify a user when their KYC is approved."""
+    if created and instance.approved:
+        send_kyc_approval_email.enqueue(instance.user)

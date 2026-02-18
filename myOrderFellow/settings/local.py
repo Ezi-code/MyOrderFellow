@@ -8,9 +8,7 @@ SECRET_KEY = "django-insecure-m5!8_e4vop+j#!_-c@vl)oylv56bt9bz=!*-#7u(r$9s!uc4(8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "myorderfellow.onrender.com",
-]
+ALLOWED_HOSTS = ["*"]
 
 
 # Database

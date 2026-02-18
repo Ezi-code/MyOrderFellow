@@ -4,8 +4,8 @@ from django.core.mail import send_mail
 
 from django.conf import settings
 from django_tasks import task
-from secrets import compare_digest
 
+from orderReceptions.models import OrderDetails
 from users.models import User
 
 
@@ -35,9 +35,9 @@ def send_order_status_update_email(order_id):
     """send order status update email to customer."""
     from orderReceptions.models import OrderStatusHistory
 
-    order_instance = None
+    order_instance = OrderDetails.objects.get(pk=order_id)
     try:
-        order_instance = OrderStatusHistory.objects.create(
+        OrderStatusHistory.objects.create(
             order=order_instance, status=order_instance.tracking_status
         ).order
     except OrderStatusHistory.DoesNotExist:
@@ -70,18 +70,8 @@ def verify_webhook_signature(request):
         raise ValueError("X-Customer-Email header is missing.")
 
     try:
-        company = User.objects.get(email=customer_email, is_active=True)
+        User.objects.get(email=customer_email, is_active=True)
     except User.DoesNotExist:
         raise ValueError("Company account not found or inactive.")
-
-    signature = request.headers.get("X-Webhook-Signature")
-    if not signature:
-        raise ValueError("X-Webhook-Signature header is missing.")
-
-    webhook_secret = company.webhook_secret
-    if not webhook_secret.is_active or webhook_secret.is_expired():
-        raise ValueError("Webhook secret is inactive or expired")
-    if not compare_digest(signature, webhook_secret.secret_key):
-        raise Exception("Invalid signature")
 
     return request
