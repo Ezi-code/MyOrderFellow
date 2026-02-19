@@ -120,7 +120,6 @@ class WebhookOrderListView(APIView):
         order_instance = self.get_object(request.data.get("id"))
         current_status = order_instance.tracking_status
         new_status = request.data.get("tracking_status")
-        print(request.data)
 
         # Updates order and sends email if status changed
         if current_status != new_status:
