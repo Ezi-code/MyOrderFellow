@@ -1,12 +1,30 @@
 """order receptions utils."""
 
+import logging
+import time
 from django.core.mail import send_mail
 
 from django.conf import settings
 from django_tasks import task
 
 from orderReceptions.models import OrderDetails
-from users.models import User
+
+logger = logging.getLogger(__name__)
+
+
+def send_email_with_retry(subject, message, email_from, recipient_list, retries=3, delay=5):
+    """Send email with retry mechanism."""
+    for attempt in range(retries):
+        try:
+            return send_mail(subject, message, email_from, recipient_list)
+        except Exception as err:
+            if attempt < retries - 1:
+                logger.warning(
+                    f"Email sending failed. Retrying in {delay} seconds. Error: {err}"
+                )
+                time.sleep(delay)
+            else:
+                raise err
 
 
 @task(queue_name="high_priority")
@@ -27,7 +45,7 @@ def send_order_received_confirmation(order_id):
 
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [order.customer_details.email]
-    send_mail(subject, message, email_from, recipient_list)
+    send_email_with_retry(subject, message, email_from, recipient_list)
 
 
 @task(queue_name="high_priority")
@@ -50,7 +68,7 @@ def send_order_status_update_email(order_id):
     )
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [order_instance.customer_details.email]
-    send_mail(subject, message, email_from, recipient_list)
+    send_email_with_retry(subject, message, email_from, recipient_list)
 
 
 @task(queue_name="high_priority")
@@ -60,18 +78,4 @@ def send_order_deleted_email(order_id, customer_email):
     message = f"Order {order_id} has been deleted!"
     email_from = settings.DEFAULT_FROM_EMAIL
     recipient_list = [customer_email]
-    send_mail(subject, message, email_from, recipient_list)
-
-
-def verify_webhook_signature(request):
-    """verify webhook signature."""
-    customer_email = request.headers.get("X-Customer-Email")
-    if not customer_email:
-        raise ValueError("X-Customer-Email header is missing.")
-
-    try:
-        User.objects.get(email=customer_email, is_active=True)
-    except User.DoesNotExist:
-        raise ValueError("Company account not found or inactive.")
-
-    return request
+    send_email_with_retry(subject, message, email_from, recipient_list)

@@ -1,10 +1,12 @@
 """
 Django settings for myOrderFellow project.
 """
+
 from datetime import timedelta
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +27,7 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework.authtoken",
-    "anymail"
+    "anymail",
 ]
 
 LOCAL_APPS = [
@@ -71,7 +73,7 @@ WSGI_APPLICATION = "myOrderFellow.wsgi.application"
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation"
-                ".UserAttributeSimilarityValidator",
+        ".UserAttributeSimilarityValidator",
     },
     {
         "NAME": "django.contrib.auth.password_validation" ".MinimumLengthValidator",

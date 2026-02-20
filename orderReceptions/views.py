@@ -11,7 +11,6 @@ from orderReceptions.utils import (
     send_order_deleted_email,
     send_order_received_confirmation,
     send_order_status_update_email,
-    verify_webhook_signature,
 )
 from base.permissions import IsVerifiedUser
 from rest_framework.throttling import ScopedRateThrottle
@@ -54,7 +53,6 @@ class WebhookOrderListView(APIView):
         - Requires a valid webhook signature
         - Only authenticated verified users can access this endpoint
         """
-        request = verify_webhook_signature(request)
         order_id = request.query_params.get("id") or request.data.get("id")
         if order_id:
             order_instance = self.get_object(order_id)
@@ -83,7 +81,6 @@ class WebhookOrderListView(APIView):
         - 401 Unauthorized: If webhook signature is invalid
         - 500 Server Error: If email task fails to enqueue
         """
-        request = verify_webhook_signature(request)
         serializer = OrderDetailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -116,7 +113,6 @@ class WebhookOrderListView(APIView):
         - 404 Not Found: If order with the given ID doesn't exist
         - 401 Unauthorized: If webhook signature is invalid
         """
-        request = verify_webhook_signature(request)
         order_instance = self.get_object(request.data.get("id"))
         current_status = order_instance.tracking_status
         new_status = request.data.get("tracking_status")
@@ -156,7 +152,6 @@ class WebhookOrderListView(APIView):
         - 404 Not Found: If order with the given ID doesn't exist
         - 401 Unauthorized: If webhook signature is invalid
         """
-        request = verify_webhook_signature(request)
         order_id = request.data.get("id")
         order_detail = self.get_object(order_id)
         customer_email = order_detail.customer_details.email
